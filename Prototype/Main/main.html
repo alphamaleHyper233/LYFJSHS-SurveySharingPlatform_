@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Prototype</title>
+  <link rel="stylesheet" href="style-M.css">
+</head>
+  <!---->
+<body>
+  <h1>Survey Sharing Platform</h1>
+
+  <!--filter-->
+  <div class="controls">
+    <input id="search" type="text" placeholder="Search surveys...">
+    <select id="strandFilter">
+      <option value="All">All Strands</option>
+      <option value="STEM">STEM</option>
+      <option value="ABM">ABM</option>
+      <option value="HUMSS">HUMSS</option>
+      <option value="TVL">TVL</option>
+    </select>
+  </div>
+
+  <!--submitbutton-->
+  <div class="submit-button">
+    <a href="https://forms.gle/xzs8WihbMvFkgmXg7" target="_blank">
+      <button>Submit Your Survey</button>
+    </a>
+  </div>
+
+  <!---->
+  <div id="survey-container" class="survey-container"></div>
+
+<script>
+  const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT-YWTeGWQSC8TH-UlRIRb7RPaJtX-Qum-RdPJBlc1n_d49XKHFDreC9XNPmww5zkAmGBB8NNrsYILE/pub?gid=2015938335&single=true&output=csv";
+
+  let surveys = [];
+
+  fetch(sheetURL)
+    .then(res => res.text())
+    .then(csv => {
+      const rows = csv.split("\n");
+      rows.shift();
+
+      surveys = rows.map(r => {
+        const c = r.split(",");
+        return {
+          title: c[0],
+          description: c[1],
+          strand: c[2],
+          link: c[3]
+        };
+      });
+
+      renderSurveys(surveys);
+    });
+
+  function renderSurveys(list) {
+    const container = document.getElementById("survey-container");
+    container.innerHTML = "";
+    list.forEach(s => {
+      if (s.title && s.link) {
+        container.innerHTML += `
+          <div class="survey-card">
+            <h3>${s.title}</h3>
+            <p><b>Strand:</b> ${s.strand}</p>
+            <p>${s.description}</p>
+            <a href="${s.link}" target="_blank">Take Survey</a>
+          </div>
+        `;
+      }
+    });
+  }
+
+
+  document.getElementById("search").addEventListener("input", applyFilters);
+  document.getElementById("strandFilter").addEventListener("change", applyFilters);
+
+  function applyFilters() {
+    const query = document.getElementById("search").value.toLowerCase();
+    const strand = document.getElementById("strandFilter").value;
+
+    let filtered = surveys.filter(s =>
+      (s.title && s.title.toLowerCase().includes(query)) ||
+      (s.description && s.description.toLowerCase().includes(query))
+    );
+
+    if (strand !== "All") {
+      filtered = filtered.filter(s => s.strand === strand);
+    }
+
+    renderSurveys(filtered);
+  }
+</script>
+</body>
+</html>
